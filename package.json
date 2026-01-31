@@ -1,0 +1,40 @@
+{
+  "name": "@sigil-protocol/sdk",
+  "version": "0.1.0",
+  "description": "The identity layer for AI agents. Open protocol for agent identity, ownership verification, integrity attestation, and reputation.",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/kayossouza/sigil-protocol.git"
+  },
+  "keywords": ["ai", "agents", "identity", "cryptography", "ed25519", "protocol"],
+  "author": "Kaizen Foundry",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/kayossouza/sigil-protocol/issues"
+  },
+  "homepage": "https://github.com/kayossouza/sigil-protocol#readme",
+  "dependencies": {
+    "@noble/ed25519": "^2.2.3",
+    "@noble/hashes": "^1.7.2",
+    "bs58": "^6.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.13.1",
+    "typescript": "^5.7.3",
+    "vitest": "^3.0.5"
+  }
+}
