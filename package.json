@@ -1,7 +1,7 @@
 {
-  "name": "@sigil-protocol/sdk",
+  "name": "sigil-protocol",
   "version": "0.1.0",
-  "description": "The identity layer for AI agents. Open protocol for agent identity, ownership verification, integrity attestation, and reputation.",
+  "description": "The identity layer for AI agents. Ed25519 identity, ownership verification, integrity attestation, and signed interaction receipts.",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -11,24 +11,43 @@
       "types": "./dist/index.d.ts"
     }
   },
+  "files": [
+    "dist",
+    "LICENSE",
+    "README.md"
+  ],
   "scripts": {
     "build": "tsc",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "prepublishOnly": "npm run test && npm run build"
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/kayossouza/sigil-protocol.git"
   },
-  "keywords": ["ai", "agents", "identity", "cryptography", "ed25519", "protocol"],
+  "keywords": [
+    "ai",
+    "agents",
+    "identity",
+    "cryptography",
+    "ed25519",
+    "protocol",
+    "sigil",
+    "moltbook",
+    "clawdbot"
+  ],
   "author": "Kaizen Foundry",
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/kayossouza/sigil-protocol/issues"
   },
   "homepage": "https://github.com/kayossouza/sigil-protocol#readme",
+  "engines": {
+    "node": ">=18"
+  },
   "dependencies": {
-    "@noble/ed25519": "^2.2.3",
+    "@noble/ed25519": "^3.0.0",
     "@noble/hashes": "^1.7.2",
     "bs58": "^6.0.0"
   },

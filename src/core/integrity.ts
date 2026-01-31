@@ -6,6 +6,7 @@
  */
 
 import { sha256 } from '@noble/hashes/sha2.js';
+import { bytesToHex } from '@noble/hashes/utils.js';
 import bs58 from 'bs58';
 import { signString, verifyString } from './identity.js';
 import type { IntegrityAttestation } from '../types/index.js';
@@ -14,7 +15,7 @@ import type { IntegrityAttestation } from '../types/index.js';
 export function hashContent(content: string): string {
   const bytes = new TextEncoder().encode(content);
   const digest = sha256(bytes);
-  return 'sha256:' + Buffer.from(digest).toString('hex');
+  return 'sha256:' + bytesToHex(digest);
 }
 
 /**
@@ -27,7 +28,7 @@ export function computeSoulHash(files: Record<string, string>): string {
   const combined = hashes.join('\n');
   const bytes = new TextEncoder().encode(combined);
   const digest = sha256(bytes);
-  return 'sha256:' + Buffer.from(digest).toString('hex');
+  return 'sha256:' + bytesToHex(digest);
 }
 
 /**

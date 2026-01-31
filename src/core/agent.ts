@@ -5,6 +5,7 @@
  * integrity attestation, and interaction receipts.
  */
 
+import { bytesToHex } from '@noble/hashes/utils.js';
 import { generateKeypair, deriveSigilId, signString } from './identity.js';
 import { computeSoulHash, createAttestation, verifyAttestation } from './integrity.js';
 import { createDocument, verifyDocument } from './document.js';
@@ -18,7 +19,7 @@ import type {
   OwnershipClaim,
 } from '../types/index.js';
 
-let receiptCounter = 0;
+let receiptSeq = 0;
 
 export class SigilAgent {
   readonly keypair: SigilKeypair;
@@ -103,7 +104,7 @@ export class SigilAgent {
   }): InteractionReceipt {
     const receipt: InteractionReceipt = {
       type: 'interaction-receipt',
-      id: `receipt-${Date.now()}-${++receiptCounter}`,
+      id: `receipt-${Date.now()}-${++receiptSeq}`,
       from: this.id,
       to: params.to,
       timestamp: new Date().toISOString(),
@@ -135,7 +136,7 @@ export class SigilAgent {
     return {
       id: this.id,
       name: this.name,
-      publicKey: Buffer.from(this.keypair.publicKey).toString('hex'),
+      publicKey: bytesToHex(this.keypair.publicKey),
     };
   }
 }
