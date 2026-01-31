@@ -8,11 +8,9 @@
 
 import { bytesToHex } from '@noble/hashes/utils.js';
 import {
-  generateKeypair,
   deriveSigilId,
   signString,
   verifyString,
-  publicKeyFromSigilId,
 } from './identity.js';
 import type {
   SigilKeypair,
@@ -97,8 +95,8 @@ export function verifyRevocation(
 }
 
 /**
- * Build a key chain from a sequence of rotation statements.
- * Verifies each link: rotation N's newKey must match rotation N+1's previousKey.
+ * Build a key chain from a sequence of rotation and revocation statements.
+ * This function only constructs the chain; use `verifyKeyChain` to validate it.
  */
 export function buildKeyChain(
   originalPublicKey: Uint8Array,

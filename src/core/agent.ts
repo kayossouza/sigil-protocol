@@ -9,7 +9,7 @@ import { bytesToHex } from '@noble/hashes/utils.js';
 import { generateKeypair, deriveSigilId, signString } from './identity.js';
 import { computeSoulHash, createAttestation, verifyAttestation } from './integrity.js';
 import { createDocument, verifyDocument } from './document.js';
-import { createRotation, buildKeyChain, verifyKeyChain, isKeyRevoked, createRevocation } from './rotation.js';
+import { createRotation, buildKeyChain, createRevocation } from './rotation.js';
 import type {
   SigilKeypair,
   CreateAgentOptions,

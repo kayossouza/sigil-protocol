@@ -88,7 +88,7 @@ export interface KeyRotationStatement {
   type: 'key-rotation';
   previousKey: string; // hex-encoded old public key
   newKey: string; // hex-encoded new public key
-  sigilId: string; // remains the same (derived from original key)
+  sigilId: string; // sigil identifier associated with this rotation
   rotatedAt: string; // ISO 8601
   reason: 'routine' | 'compromised' | 'upgrade';
   /** Signature by the OLD private key over the canonical body */
