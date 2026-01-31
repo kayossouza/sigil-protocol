@@ -9,6 +9,7 @@ import { bytesToHex } from '@noble/hashes/utils.js';
 import { generateKeypair, deriveSigilId, signString } from './identity.js';
 import { computeSoulHash, createAttestation, verifyAttestation } from './integrity.js';
 import { createDocument, verifyDocument } from './document.js';
+import { createRotation, buildKeyChain, verifyKeyChain, isKeyRevoked, createRevocation } from './rotation.js';
 import type {
   SigilKeypair,
   CreateAgentOptions,
@@ -17,22 +18,29 @@ import type {
   InteractionReceipt,
   ReceiptQuality,
   OwnershipClaim,
+  KeyRotationStatement,
+  KeyRevocationStatement,
+  KeyChain,
 } from '../types/index.js';
 
 let receiptSeq = 0;
 
 export class SigilAgent {
-  readonly keypair: SigilKeypair;
-  readonly id: string;
+  private _keypair: SigilKeypair;
+  readonly id: string; // Sigil ID derived from ORIGINAL key — never changes
   readonly name: string;
   readonly options: CreateAgentOptions;
 
   private _document: AgentDocument | null = null;
   private _attestation: IntegrityAttestation | null = null;
+  private _originalPublicKey: Uint8Array;
+  private _rotations: KeyRotationStatement[] = [];
+  private _revocations: KeyRevocationStatement[] = [];
 
-  private constructor(keypair: SigilKeypair, options: CreateAgentOptions) {
-    this.keypair = keypair;
-    this.id = deriveSigilId(keypair.publicKey);
+  private constructor(keypair: SigilKeypair, options: CreateAgentOptions, originalPublicKey?: Uint8Array) {
+    this._keypair = keypair;
+    this._originalPublicKey = originalPublicKey ?? keypair.publicKey;
+    this.id = deriveSigilId(this._originalPublicKey);
     this.name = options.name;
     this.options = options;
   }
@@ -50,7 +58,7 @@ export class SigilAgent {
 
   /** Get the public key as Uint8Array */
   get publicKey(): Uint8Array {
-    return this.keypair.publicKey;
+    return this._keypair.publicKey;
   }
 
   /**
@@ -59,7 +67,7 @@ export class SigilAgent {
    */
   document(owner?: OwnershipClaim): AgentDocument {
     this._document = createDocument(
-      this.keypair,
+      this._keypair,
       this.options,
       this._attestation ?? undefined,
       owner
@@ -79,7 +87,7 @@ export class SigilAgent {
    * Stores it internally for inclusion in future documents.
    */
   attestIntegrity(files: Record<string, string>): IntegrityAttestation {
-    this._attestation = createAttestation(files, this.keypair.privateKey);
+    this._attestation = createAttestation(files, this._keypair.privateKey);
     return this._attestation;
   }
 
@@ -90,7 +98,7 @@ export class SigilAgent {
     attestation: IntegrityAttestation,
     currentFiles: Record<string, string>
   ) {
-    return verifyAttestation(attestation, currentFiles, this.keypair.publicKey);
+    return verifyAttestation(attestation, currentFiles, this._keypair.publicKey);
   }
 
   /**
@@ -117,7 +125,7 @@ export class SigilAgent {
     // Sign the receipt (excluding proofs)
     const { fromProof, toProof, ...body } = receipt;
     const payload = JSON.stringify(body);
-    receipt.fromProof = signString(payload, this.keypair.privateKey);
+    receipt.fromProof = signString(payload, this._keypair.privateKey);
 
     return receipt;
   }
@@ -126,7 +134,72 @@ export class SigilAgent {
    * Sign an arbitrary message (for challenges, custom protocols).
    */
   sign(message: string): string {
-    return signString(message, this.keypair.privateKey);
+    return signString(message, this._keypair.privateKey);
+  }
+
+  /** Get the current keypair */
+  get keypair(): SigilKeypair {
+    return this._keypair;
+  }
+
+  /**
+   * Rotate to a new keypair. The old key signs a rotation statement
+   * authorizing the new key. Identity (Sigil ID) is preserved.
+   * Returns the new keypair and the rotation statement.
+   */
+  rotateKey(
+    reason: KeyRotationStatement['reason'] = 'routine'
+  ): { newKeypair: SigilKeypair; rotation: KeyRotationStatement } {
+    const newKeypair = generateKeypair();
+    const rotation = createRotation(this._keypair, newKeypair.publicKey, reason);
+    this._rotations.push(rotation);
+    this._keypair = newKeypair;
+    return { newKeypair, rotation };
+  }
+
+  /**
+   * Rotate to a specific keypair (for restoring from backup).
+   */
+  rotateToKeypair(
+    newKeypair: SigilKeypair,
+    reason: KeyRotationStatement['reason'] = 'routine'
+  ): KeyRotationStatement {
+    const rotation = createRotation(this._keypair, newKeypair.publicKey, reason);
+    this._rotations.push(rotation);
+    this._keypair = newKeypair;
+    return rotation;
+  }
+
+  /**
+   * Revoke a previous key (e.g., after compromise).
+   */
+  revokeKey(revokedPublicKey: Uint8Array, reason: string): KeyRevocationStatement {
+    const revocation = createRevocation(this._keypair, revokedPublicKey, reason);
+    this._revocations.push(revocation);
+    return revocation;
+  }
+
+  /**
+   * Get the full key chain for this agent.
+   */
+  keyChain(): KeyChain {
+    return buildKeyChain(this._originalPublicKey, this._rotations, this._revocations);
+  }
+
+  /**
+   * Restore an agent with a key chain history.
+   */
+  static fromKeyChain(
+    currentKeypair: SigilKeypair,
+    originalPublicKey: Uint8Array,
+    rotations: KeyRotationStatement[],
+    options: CreateAgentOptions,
+    revocations: KeyRevocationStatement[] = []
+  ): SigilAgent {
+    const agent = new SigilAgent(currentKeypair, options, originalPublicKey);
+    agent._rotations = [...rotations];
+    agent._revocations = [...revocations];
+    return agent;
   }
 
   /**
@@ -136,7 +209,7 @@ export class SigilAgent {
     return {
       id: this.id,
       name: this.name,
-      publicKey: bytesToHex(this.keypair.publicKey),
+      publicKey: bytesToHex(this._keypair.publicKey),
     };
   }
 }
