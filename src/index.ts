@@ -23,6 +23,15 @@ export {
   verifyAttestation,
 } from './core/integrity.js';
 export { createDocument, verifyDocument } from './core/document.js';
+export {
+  createRotation,
+  verifyRotation,
+  createRevocation,
+  verifyRevocation,
+  buildKeyChain,
+  verifyKeyChain,
+  isKeyRevoked,
+} from './core/rotation.js';
 export type {
   SigilKeypair,
   CreateAgentOptions,
@@ -35,4 +44,7 @@ export type {
   InteractionReceipt,
   VerificationResult,
   IntegrityCheckResult,
+  KeyRotationStatement,
+  KeyRevocationStatement,
+  KeyChain,
 } from './types/index.js';
