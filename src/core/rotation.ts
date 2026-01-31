@@ -149,9 +149,25 @@ export function verifyKeyChain(chain: KeyChain): {
 
 /**
  * Check if a specific key has been revoked in the chain.
+ *
+ * Security note:
+ * This helper only treats a revocation as effective if the corresponding
+ * {@link KeyRevocationStatement} has been *pre-validated* by the caller
+ * (e.g. its signature has been checked against the appropriate key) and
+ * explicitly marked as such via a `validated: true` flag.
+ *
+ * If a `KeyChain` is built from untrusted input, callers MUST NOT rely on
+ * this function unless they have first verified the revocation proofs and
+ * marked trusted entries with `validated: true`. Otherwise, forged
+ * revocation entries could cause keys to appear revoked without proof.
  */
 export function isKeyRevoked(chain: KeyChain, publicKeyHex: string): boolean {
-  return chain.revocations.some((r) => r.revokedKey === publicKeyHex);
+  return chain.revocations.some(
+    (r) =>
+      r.revokedKey === publicKeyHex &&
+      // Only consider revocations that have been explicitly marked as validated.
+      (r as any).validated === true
+  );
 }
 
 /** Helper: hex string to Uint8Array */
